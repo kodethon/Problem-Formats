@@ -72,36 +72,36 @@ for f in $files; do
     input=$(ls "$AUTOGRADER_PATH/.inputs/$f" 2> /dev/null)
     
     if [ -z "$input" ]; then
-    	command="{{run_command}} $argument < /dev/null > $TMP_OUTPUT_PATH 2>&1"
+        command="{{run_command}} $argument < /dev/null > $TMP_OUTPUT_PATH 2>&1"
     else
-    	command="{{run_command}} $argument < \"$AUTOGRADER_PATH/.inputs/$f\" > $TMP_OUTPUT_PATH 2>&1"
+        command="{{run_command}} $argument < \"$AUTOGRADER_PATH/.inputs/$f\" > $TMP_OUTPUT_PATH 2>&1"
     fi
 
-	echo "Testing with: $command"
-	full_command="ulimit -Sv $MEM_LIMIT; ulimit -f $(expr $HARD_OUTPUT_LIMIT / $BLOCK_SIZE); $command"
-	timeout {{execution_time}}s sh -c "$full_command" 2> /dev/null
-	test_exit_status=$?
+    echo "Testing with: $command"
+    full_command="ulimit -Sv $MEM_LIMIT; ulimit -f $(expr $HARD_OUTPUT_LIMIT / $BLOCK_SIZE); $command"
+    timeout {{execution_time}}s sh -c "$full_command" 2> /dev/null
+    test_exit_status=$?
 
-	echo "Exit status: $test_exit_status"
-	d='' # Set comparison variable to be empty
+    echo "Exit status: $test_exit_status"
+    d='' # Set comparison variable to be empty
     if [ "$test_exit_status" -eq 124 ]; then
         >&2 echo "Test Case $f: Your program did not complete, some output may not be shown due to buffering."
-	elif [ "$test_exit_status" -eq 139 ]; then
-	    # Check for exit status to see if memory limit was breached
-		>&2 echo "Test Case $f: Your program used more than $(expr $MEM_LIMIT / 1024 / 1024)MB of virtual memory."
- 	elif [ "$test_exit_status" -eq 153 ]; then
-	   printf ' (truncated)' >> $TMP_OUTPUT_PATH
-	   >&2 echo "Test Case $f: Your program printed an unexpected amount of data, some output may be truncated."
-	else
+    elif [ "$test_exit_status" -eq 139 ]; then
+        # Check for exit status to see if memory limit was breached
+        >&2 echo "Test Case $f: Your program used more than $(expr $MEM_LIMIT / 1024 / 1024)MB of virtual memory."
+    elif [ "$test_exit_status" -eq 153 ]; then
+       printf ' (truncated)' >> $TMP_OUTPUT_PATH
+       >&2 echo "Test Case $f: Your program printed an unexpected amount of data, some output may be truncated."
+    else
         # Compare if output is equal to the answer
         d=$($python_bin "$AUTOGRADER_PATH/.utils/compare.py" "$AUTOGRADER_PATH/.answers/$f" $TMP_OUTPUT_PATH)
-	fi
+    fi
         
     if [ -z "$d" ]; then
         printf "Incorrect"
 
-		output_size=$(du -sb $TMP_OUTPUT_PATH | awk '{ print $1 }')
-    	answer_size=$(du -sb "$AUTOGRADER_PATH/.answers/$f" | awk '{ print $1 }')
+        output_size=$(du -sb $TMP_OUTPUT_PATH | awk '{ print $1 }')
+        answer_size=$(du -sb "$AUTOGRADER_PATH/.answers/$f" | awk '{ print $1 }')
         # If output is greater than output_size and greater than 2x the answer, trunc file
         if [ "$output_size" -gt "$SOFT_OUTPUT_LIMIT" ]; then 
             echo "\nSize of output is $output_size"
@@ -129,8 +129,8 @@ for f in $files; do
     else
         echo "Correct\n"
         score=$((score + 1))
-		
-		test_case_args="score 1 max_score 1 number $f"
+        
+        test_case_args="score 1 max_score 1 number $f"
         $python_bin "$AUTOGRADER_PATH/.utils/toJson.py" $test_case_args \
             output "$SUBMISSION_PATH/$TMP_OUTPUT_PATH" >> $CASES_PATH
 

@@ -62,11 +62,11 @@ for f in $files; do
         cat $tmp_output_path >> $feedback_path
         printf "\n\n" >> $feedback_path
 
-		comment=$(cat comments/$f 2> /dev/null)
+        comment=$(cat comments/$f 2> /dev/null)
         if [ "$comment" != "" ]; then
-			printf "Comment: " >> $feedback_path
-			cat comments/$f >> $feedback_path 2> /dev/null
-			printf "\n\n" >> $feedback_path
+            printf "Comment: " >> $feedback_path
+            cat comments/$f >> $feedback_path 2> /dev/null
+            printf "\n\n" >> $feedback_path
         fi
 
         printf "0 1\n" >> $cases_path
