@@ -27,7 +27,7 @@ if __name__ == "__main__":
             contents = sys.argv[i + 1] 
 
             # If the arg is a path, read its contents
-            if os.path.exists(sys.argv[i + 1]):
+            if os.path.isabs(sys.argv[i + 1]) and os.path.exists(sys.argv[i + 1]):
                 fp = open(sys.argv[i + 1], 'r')
                 contents = fp.read()
 
