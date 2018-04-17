@@ -5,6 +5,14 @@
 # Assumptions:
 #   1. There is at least one file in the inputs folder 
 
+python_bin=$(which python2.7)
+if [ -z "$python_bin" ]; then
+    python_bin=$(which python2)
+    if [ -z "$python_bin" ]; then
+        python_bin=python
+    fi    
+fi
+
 # Move into correct folder
 cd ..
 if [ -z $1 ]; then
@@ -14,6 +22,7 @@ else
 fi
 cd submission
 
+SUBMISSION_PATH=$(pwd)
 AUTOGRADER_PATH=~/$problem
 CASES_PATH=.cases
 FEEDBACK_PATH=.feedback # path to store feedback
@@ -85,7 +94,7 @@ for f in $files; do
 	   >&2 echo "Test Case $f: Your program printed an unexpected amount of data, some output may be truncated."
 	else
         # Compare if output is equal to the answer
-        d=$(python "$AUTOGRADER_PATH/.utils/compare.py" "$AUTOGRADER_PATH/.answers/$f" $TMP_OUTPUT_PATH)
+        d=$($python_bin "$AUTOGRADER_PATH/.utils/compare.py" "$AUTOGRADER_PATH/.answers/$f" $TMP_OUTPUT_PATH)
 	fi
         
     if [ -z "$d" ]; then
@@ -112,19 +121,19 @@ for f in $files; do
         command="diff \"$AUTOGRADER_PATH/.answers/$f\" $TMP_OUTPUT_PATH > $DIFF_PATH"
         timeout 1s sh -c "ulimit -f $(expr $DIFF_LIMIT / $BLOCK_SIZE); $command" 2> /dev/null
         
-        comment_arg=''
-        if [ -f "$AUTOGRADER_PATH/.comments/$f" ]; then
-            comment_arg="comment \"$AUTOGRADER_PATH/.comments/$f\""
-        fi
-        test_case_args="score 0 max_score 1 number $f output $TMP_OUTPUT_PATH diff $DIFF_PATH $comment_arg"
-        python "$AUTOGRADER_PATH/.utils/toJson.py" $test_case_args >> $CASES_PATH
+        #comment_arg=''
+        #if [ -f "$AUTOGRADER_PATH/.comments/$f" ]; then
+        #    comment_arg="comment '$AUTOGRADER_PATH/.comments/$f'"
+        #fi
+        test_case_args="score 0 max_score 1 number $f output $SUBMISSION_PATH/$TMP_OUTPUT_PATH diff $SUBMISSION_PATH/$DIFF_PATH"
+        $python_bin "$AUTOGRADER_PATH/.utils/toJson.py" $test_case_args >> $CASES_PATH
         printf ',' >> $CASES_PATH
     else
         echo "Correct\n"
         score=$((score + 1))
 		
-		test_case_args="score 1 max_score 1  number $f output $TMP_OUTPUT_PATH"
-        python "$AUTOGRADER_PATH/.utils/toJson.py" $test_case_args >> $CASES_PATH
+		test_case_args="score 1 max_score 1  number $f output $SUBMISSION_PATH/$TMP_OUTPUT_PATH"
+        $python_bin "$AUTOGRADER_PATH/.utils/toJson.py" $test_case_args >> $CASES_PATH
         printf ',' >> $CASES_PATH
     fi 
 done
@@ -135,7 +144,7 @@ mv .cases_tmp $CASES_PATH
 printf ']' >> $CASES_PATH
 
 printf "\nTesting done... writing to results.json"
-python "$AUTOGRADER_PATH/.utils/toJsonFromFile.py" output $FEEDBACK_PATH tests $CASES_PATH > results.json
+$python_bin "$AUTOGRADER_PATH/.utils/toJsonFromFile.py" output $FEEDBACK_PATH tests $CASES_PATH > results.json
 
 # Clean-up
 rm $CASES_PATH 2> /dev/null
