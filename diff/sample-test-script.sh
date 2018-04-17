@@ -120,20 +120,20 @@ for f in $files; do
         # Try to generate a diff, if it's too large, trunc it
         command="diff \"$AUTOGRADER_PATH/.answers/$f\" $TMP_OUTPUT_PATH > $DIFF_PATH"
         timeout 1s sh -c "ulimit -f $(expr $DIFF_LIMIT / $BLOCK_SIZE); $command" 2> /dev/null
-        
-        #comment_arg=''
-        #if [ -f "$AUTOGRADER_PATH/.comments/$f" ]; then
-        #    comment_arg="comment '$AUTOGRADER_PATH/.comments/$f'"
-        #fi
-        test_case_args="score 0 max_score 1 number $f output $SUBMISSION_PATH/$TMP_OUTPUT_PATH diff $SUBMISSION_PATH/$DIFF_PATH"
-        $python_bin "$AUTOGRADER_PATH/.utils/toJson.py" $test_case_args >> $CASES_PATH
+       
+        test_case_args="score 0 max_score 1 number $f"
+        $python_bin "$AUTOGRADER_PATH/.utils/toJson.py" $test_case_args \
+            output "$SUBMISSION_PATH/$TMP_OUTPUT_PATH" diff "$SUBMISSION_PATH/$DIFF_PATH" >> $CASES_PATH
+
         printf ',' >> $CASES_PATH
     else
         echo "Correct\n"
         score=$((score + 1))
 		
-		test_case_args="score 1 max_score 1  number $f output $SUBMISSION_PATH/$TMP_OUTPUT_PATH"
-        $python_bin "$AUTOGRADER_PATH/.utils/toJson.py" $test_case_args >> $CASES_PATH
+		test_case_args="score 1 max_score 1 number $f"
+        $python_bin "$AUTOGRADER_PATH/.utils/toJson.py" $test_case_args \
+            output "$SUBMISSION_PATH/$TMP_OUTPUT_PATH" >> $CASES_PATH
+
         printf ',' >> $CASES_PATH
     fi 
 done
