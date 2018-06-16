@@ -23,7 +23,7 @@ fi
 cd submission
 
 SUBMISSION_PATH=$(pwd)
-AUTOGRADER_PATH=~/$problem
+AUTOGRADER_PATH=~/$problem/autograder
 CASES_PATH=.cases
 FEEDBACK_PATH=.feedback # path to store feedback
 TMP_OUTPUT_PATH=.tmp_output # path to store tmp output
@@ -36,6 +36,13 @@ touch $TMP_OUTPUT_PATH
 BLOCK_SIZE=512
 MEM_LIMIT=$(expr $(cat /sys/fs/cgroup/memory/memory.limit_in_bytes) / 4) 
 NUM_CASES=$(ls "$AUTOGRADER_PATH/.answers" | wc | awk '{print $1}')
+
+if [ "$NUM_CASES" -eq 0 ]; then
+    $python_bin "$AUTOGRADER_PATH/.utils/toJson.py" \
+        output 'Your submission was received but no test cases were found.' > results.json
+    exit
+fi
+
 HARD_OUTPUT_LIMIT=25000000 # 25MB
 SOFT_OUTPUT_LIMIT=$(expr 2000000 / $NUM_CASES)
 if [ "$SOFT_OUTPUT_LIMIT" -gt 100000 ]; then 
