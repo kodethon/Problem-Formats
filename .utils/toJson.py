@@ -10,9 +10,9 @@ def toDict():
             val = sys.argv[i + 1]
 
             try:
-                output[str(sys.argv[i])] = val.encode('utf-8').strip()
+                output[str(sys.argv[i])] = val.encode('utf-8')
             except UnicodeDecodeError:
-                output[str(sys.argv[i])] = val.encode('ISO-8859-1').strip()
+                output[str(sys.argv[i])] = val.encode('ISO-8859-1')
 
     return output
 
