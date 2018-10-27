@@ -86,8 +86,11 @@ for f in $files; do
 
     echo "Testing with: $command"
     full_command="ulimit -Sv $MEM_LIMIT; ulimit -f $(expr $HARD_OUTPUT_LIMIT / $BLOCK_SIZE); $command"
+    start_time=$(date +%s%3N)
     timeout {{execution_time}}s sh -c "$full_command" 2> /dev/null
     test_exit_status=$?
+    end_time=$(date +%s%3N)
+    runtime=$(expr $end_time - $start_time)
 
     echo "Exit status: $test_exit_status"
     d='' # Set comparison variable to be empty
@@ -128,7 +131,7 @@ for f in $files; do
         command="diff \"$AUTOGRADER_PATH/.answers/$f\" $TMP_OUTPUT_PATH > $DIFF_PATH"
         timeout 1s sh -c "ulimit -f $(expr $DIFF_LIMIT / $BLOCK_SIZE); $command" 2> /dev/null
        
-        test_case_args="score 0 max_score 1 number $f"
+        test_case_args="score 0 max_score 1 number $f runtime $runtime "
         $python_bin "$AUTOGRADER_PATH/.utils/toJson.py" $test_case_args \
             output "$SUBMISSION_PATH/$TMP_OUTPUT_PATH" diff "$SUBMISSION_PATH/$DIFF_PATH" >> $CASES_PATH
 
@@ -137,7 +140,7 @@ for f in $files; do
         echo "Correct\n"
         score=$((score + 1))
         
-        test_case_args="score 1 max_score 1 number $f"
+        test_case_args="score 1 max_score 1 number $f runtime $runtime"
         $python_bin "$AUTOGRADER_PATH/.utils/toJson.py" $test_case_args \
             output "$SUBMISSION_PATH/$TMP_OUTPUT_PATH" >> $CASES_PATH
 
