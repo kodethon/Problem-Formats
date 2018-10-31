@@ -79,9 +79,9 @@ for f in $files; do
     input=$(ls "$AUTOGRADER_PATH/.inputs/$f" 2> /dev/null)
     
     if [ -z "$input" ]; then
-        command="{{run_command}} $argument < /dev/null > $TMP_OUTPUT_PATH 2>&1"
+        command="({{run_command}} $argument < /dev/null) > $TMP_OUTPUT_PATH 2>&1"
     else
-        command="{{run_command}} $argument < \"$AUTOGRADER_PATH/.inputs/$f\" > $TMP_OUTPUT_PATH 2>&1"
+        command="({{run_command}} $argument < \"$AUTOGRADER_PATH/.inputs/$f\") > $TMP_OUTPUT_PATH 2>&1"
     fi
 
     echo "Testing with: $command"
