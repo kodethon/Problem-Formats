@@ -53,6 +53,11 @@ DIFF_LIMIT=$(expr 500000 / $NUM_CASES)
 echo "Max virtual memory per test case: $MEM_LIMIT"
 echo "Max diff size per test case: $DIFF_LIMIT\n"
 
+# Link files
+test_data=$AUTOGRADER_PATH/test_data
+echo "Linking files in $test_data..."
+ln -sf "$test_data"/* .
+
 # Run init command
 init_command="{{init_command}}"
 if [ -z "$init_command" ]; then
