@@ -56,7 +56,11 @@ echo "Max diff size per test case: $DIFF_LIMIT\n"
 # Link files
 test_data=$AUTOGRADER_PATH/test_data
 echo "Linking files in $test_data..."
-ln -sf "$test_data"/* .
+if [ -z "$(ls "$test_data")" ]; then
+    echo "No files found...\n"
+else
+    ln -sf "$test_data"/* .
+fi
 
 # Run init command
 init_command="{{init_command}}"
