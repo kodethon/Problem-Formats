@@ -1,10 +1,10 @@
 ## Diff
 
-Contains the test script used by Kodethon
+Contains the test script used by Kodethon.
 
 ## Dynamic
 
-Contains a scaffold to write a dynamic problem
+Contains a scaffold to write a dynamic problem.
 
 ## Utils
 
