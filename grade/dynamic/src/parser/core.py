@@ -1,0 +1,2 @@
+class KParser(object):
+    pass
