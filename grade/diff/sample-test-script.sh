@@ -56,7 +56,7 @@ echo "Max diff size per test case: $DIFF_LIMIT\n"
 # Link files
 test_data=$AUTOGRADER_PATH/test_data
 echo "Linking files in $test_data..."
-if [ -z "$(ls "$test_data")" ]; then
+if [ -z "$(ls "$test_data" 2> /dev/null)" ]; then
     echo "No files found...\n"
 else
     ln -sf "$test_data"/* .
