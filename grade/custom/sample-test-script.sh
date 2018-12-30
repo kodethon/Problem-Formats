@@ -1,10 +1,13 @@
+###
 # Below is an outline of how to write a custom script
+###
 
+# The current directoy is 'autograder'
+# The submitted files are located in ../submission
 submission_path=../submission
 
 # Step 1.
-# The current directoy is 'autograder', 
-# some test files may need to be linked into the submission folder
+# Let's assume some test files (TEST_FILES) need to be linked into the submission folder
 ln -sf TEST_FILES $submission_path
 
 # Step 2.
