@@ -170,3 +170,6 @@ rm $CASES_PATH 2> /dev/null
 rm $TMP_OUTPUT_PATH 2> /dev/null
 rm $FEEDBACK_PATH 2> /dev/null
 rm $DIFF_PATH 2> /dev/null
+
+# In case the dir was changed, move it to expected location
+mv results.json $SUBMISSION_PATH 2> /dev/null
