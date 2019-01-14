@@ -142,7 +142,7 @@ for f in $files; do
        
         test_case_args="score 0 max_score 1 number $f runtime $runtime "
         $python_bin "$AUTOGRADER_PATH/.utils/toJson.py" $test_case_args \
-            output "$SUBMISSION_PATH/$TMP_OUTPUT_PATH" diff "$SUBMISSION_PATH/$DIFF_PATH" >> $CASES_PATH
+            output "$(pwd)/$TMP_OUTPUT_PATH" diff "$(pwd)/$DIFF_PATH" >> $CASES_PATH
 
         printf ',' >> $CASES_PATH
     else
@@ -172,4 +172,4 @@ rm $FEEDBACK_PATH 2> /dev/null
 rm $DIFF_PATH 2> /dev/null
 
 # In case the dir was changed, move it to expected location
-mv results.json $SUBMISSION_PATH 2> /dev/null
+mv results.json "$SUBMISSION_PATH" 2> /dev/null
