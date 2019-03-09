@@ -5,77 +5,137 @@
 # Assumptions:
 #   1. There is at least one file in the inputs folder 
 
-python_bin=$(which python2.7)
-if [ -z "$python_bin" ]; then
-    python_bin=$(which python2)
-    if [ -z "$python_bin" ]; then
-        python_bin=python
-    fi    
-fi
+### Functions
 
-# Move into correct folder
-cd ..
-if [ -z $1 ]; then
-    problem=$(basename "$(pwd)")
-else
-    problem=$1
-fi
-cd submission
+setPythonBin() {
+    PYTHON_BIN=$(which python2.7)
+    if [ -z "$PYTHON_BIN" ]; then
+        PYTHON_BIN=$(which python2)
+        if [ -z "$PYTHON_BIN" ]; then
+            PYTHON_BIN=python
+        fi    
+    fi
+}
 
-SUBMISSION_PATH=$(pwd)
-AUTOGRADER_PATH=~/$problem/autograder
-CASES_PATH=.cases
-FEEDBACK_PATH=.feedback # path to store feedback
-TMP_OUTPUT_PATH=.tmp_output # path to store tmp output
-DIFF_PATH=.diff
+setProblemFolder() {
+    # Move into correct folder
+    cd ..
+    PROBLEM_FOLDER=$(basename "$(pwd)")
+}
 
-cat /dev/null > $FEEDBACK_PATH # reset output file
-touch $TMP_OUTPUT_PATH
+moveToSubmissionFolder() {
+    cd submission
+    echo "Beginning to test in $(pwd)\n"
+}
 
-# Set resource limits
-BLOCK_SIZE=512
-MEM_LIMIT=$(expr $(cat /sys/fs/cgroup/memory/memory.limit_in_bytes) / 4) 
-NUM_CASES=$(ls "$AUTOGRADER_PATH/.answers" | wc | awk '{print $1}')
+setPaths() {
+    SUBMISSION_PATH=$(pwd)
+    AUTOGRADER_PATH=~/$PROBLEM_FOLDER/autograder
+    CASES_PATH=$SUBMISSION_PATH/.cases
+    RESULTS_PATH=$SUBMISSION_PATH/results.json
+    FEEDBACK_PATH=.feedback # path to store feedback
+    TMP_OUTPUT_PATH=.tmp_output # path to store tmp output
+    DIFF_PATH=.diff
+    TIMESTAMP_PATH=.timestamp
 
-if [ "$NUM_CASES" -eq 0 ]; then
-    $python_bin "$AUTOGRADER_PATH/.utils/toJson.py" \
-        output 'Your submission was received but no test cases were found.' > results.json
-    exit
-fi
+    cat /dev/null > $FEEDBACK_PATH # reset output file
+    touch $TMP_OUTPUT_PATH
+    touch $TIMESTAMP_PATH # Used to denote start time of test suite
+}
 
-HARD_OUTPUT_LIMIT=25000000 # 25MB
-SOFT_OUTPUT_LIMIT=$(expr 2000000 / $NUM_CASES)
-if [ "$SOFT_OUTPUT_LIMIT" -gt 100000 ]; then 
-    SOFT_OUTPUT_LIMIT=100000
-fi
-DIFF_LIMIT=$(expr 500000 / $NUM_CASES)
+setLimits() {
+    # Set resource limits
+    BLOCK_SIZE=512
+    MEM_LIMIT=$(expr $(cat /sys/fs/cgroup/memory/memory.limit_in_bytes) / 4) 
+    NUM_CASES=$(ls "$AUTOGRADER_PATH/.answers" | wc | awk '{print $1}')
 
-echo "Max virtual memory per test case: $MEM_LIMIT"
-echo "Max diff size per test case: $DIFF_LIMIT\n"
+    if [ "$NUM_CASES" -eq 0 ]; then
+        $PYTHON_BIN "$AUTOGRADER_PATH/.utils/toJson.py" \
+            output 'Your submission was received but no test cases were found.' > $RESULTS_PATH
+        exit
+    fi
 
-# Link files
-test_data=$AUTOGRADER_PATH/test_data
-echo "Linking files in $test_data..."
-if [ -z "$(ls "$test_data" 2> /dev/null)" ]; then
-    echo "No files found...\n"
-else
-    ln -sf "$test_data"/* .
-fi
+    HARD_OUTPUT_LIMIT=25000000 # 25MB
+    SOFT_OUTPUT_LIMIT=$(expr 2000000 / $NUM_CASES)
+    if [ "$SOFT_OUTPUT_LIMIT" -gt 100000 ]; then 
+        SOFT_OUTPUT_LIMIT=100000
+    fi
+    DIFF_LIMIT=$(expr 500000 / $NUM_CASES)
 
-# Run init command
-init_command="{{init_command}}"
-if [ -z "$init_command" ]; then
-    echo "No init command detected....\n"
-else
-    echo "Running init command: $init_command\n"
-    eval " $init_command"
-fi
+    echo "Max virtual memory per test case: $MEM_LIMIT"
+    echo "Max diff size per test case: $DIFF_LIMIT\n"
+}
+
+linkTestData() {
+    # Link files
+    test_data=$AUTOGRADER_PATH/test_data
+    echo "Linking files in $test_data...\n"
+    if [ -z "$(ls "$test_data" 2> /dev/null)" ]; then
+        echo "Failed to link, no files found...\n"
+    else
+        ln -sf "$test_data"/* .
+    fi
+}
+
+beginBuildingResultJson() {
+    echo -n '[' > $CASES_PATH
+}
+
+runInitCommand() {
+    # Run init command
+    init_command="{{init_command}}"
+    if [ -z "$init_command" ]; then
+        echo "No init command detected....\n"
+    else
+        printf "%s" "$init_command" > .init.bash
+        echo "Running init command: $init_command\n"
+        bash .init.bash
+    fi
+}
+
+finishBuildingResultJson() {
+    sed '$ s/.$//' $CASES_PATH > .cases_tmp
+    mv .cases_tmp $CASES_PATH
+    printf ']' >> $CASES_PATH
+    printf "\nTesting done... writing to results.json\n"
+    $PYTHON_BIN "$AUTOGRADER_PATH/.utils/toJsonFromFile.py" output $FEEDBACK_PATH tests $CASES_PATH > $RESULTS_PATH
+}
+
+cleanup() {
+    # Clean-up
+    rm $CASES_PATH 2> /dev/null
+    rm $TMP_OUTPUT_PATH 2> /dev/null
+    rm $FEEDBACK_PATH 2> /dev/null
+    rm $DIFF_PATH 2> /dev/null
+}
+
+runCleanupCommand() {
+    # Run cleanup command
+    cleanup_command="{{cleanup_command}}"
+    if [ -z "$cleanup_command" ]; then
+        echo "\nNo cleanup command detected....\n"
+    else
+        printf "%s" "$cleanup_command" > .cleanup.bash
+        echo "\nRunning cleanup command: $cleanup_command\n"
+        bash .cleanup.bash
+    fi
+}
+
+### Initialize 
+
+setPythonBin
+setProblemFolder
+moveToSubmissionFolder
+setPaths
+setLimits
+linkTestData
+beginBuildingResultJson
+runInitCommand
+
+### Begin testing
 
 score=0 # Student's score
 max=0 # Max score
-
-# Begin testing
-echo -n '[' > $CASES_PATH
 files=$(ls "$AUTOGRADER_PATH/.answers" | sort -n) # Get all answer files from answer folder
 for f in $files; do
     echo "~ Test case $f"
@@ -113,7 +173,7 @@ for f in $files; do
        >&2 echo "Test Case $f: Your program printed an unexpected amount of data, some output may be truncated."
     else
         # Compare if output is equal to the answer
-        d=$($python_bin "$AUTOGRADER_PATH/.utils/compare.py" "$AUTOGRADER_PATH/.answers/$f" $TMP_OUTPUT_PATH)
+        d=$($PYTHON_BIN "$AUTOGRADER_PATH/.utils/compare.py" "$AUTOGRADER_PATH/.answers/$f" $TMP_OUTPUT_PATH)
     fi
         
     if [ -z "$d" ]; then
@@ -141,7 +201,7 @@ for f in $files; do
         timeout 1s sh -c "ulimit -f $(expr $DIFF_LIMIT / $BLOCK_SIZE); $command" 2> /dev/null
        
         test_case_args="score 0 max_score 1 number $f runtime $runtime "
-        $python_bin "$AUTOGRADER_PATH/.utils/toJson.py" $test_case_args \
+        $PYTHON_BIN "$AUTOGRADER_PATH/.utils/toJson.py" $test_case_args \
             output "$(pwd)/$TMP_OUTPUT_PATH" diff "$(pwd)/$DIFF_PATH" >> $CASES_PATH
 
         printf ',' >> $CASES_PATH
@@ -150,26 +210,16 @@ for f in $files; do
         score=$((score + 1))
         
         test_case_args="score 1 max_score 1 number $f runtime $runtime"
-        $python_bin "$AUTOGRADER_PATH/.utils/toJson.py" $test_case_args \
+        $PYTHON_BIN "$AUTOGRADER_PATH/.utils/toJson.py" $test_case_args \
             output "$SUBMISSION_PATH/$TMP_OUTPUT_PATH" >> $CASES_PATH
 
         printf ',' >> $CASES_PATH
     fi 
 done
-
 echo "$score case(s) passed out of $max case(s)" >> $FEEDBACK_PATH
-sed '$ s/.$//' $CASES_PATH > .cases_tmp
-mv .cases_tmp $CASES_PATH
-printf ']' >> $CASES_PATH
 
-printf "\nTesting done... writing to results.json"
-$python_bin "$AUTOGRADER_PATH/.utils/toJsonFromFile.py" output $FEEDBACK_PATH tests $CASES_PATH > results.json
+### Finish 
 
-# Clean-up
-rm $CASES_PATH 2> /dev/null
-rm $TMP_OUTPUT_PATH 2> /dev/null
-rm $FEEDBACK_PATH 2> /dev/null
-rm $DIFF_PATH 2> /dev/null
-
-# In case the dir was changed, move it to expected location
-mv results.json "$SUBMISSION_PATH" 2> /dev/null
+finishBuildingResultJson
+runCleanupCommand
+cleanup
