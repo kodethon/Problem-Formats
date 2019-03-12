@@ -51,7 +51,7 @@ setLimits() {
 
     if [ "$NUM_CASES" -eq 0 ]; then
         $PYTHON_BIN "$AUTOGRADER_PATH/.utils/toJson.py" \
-            output 'Your submission was received but no test cases were found.' > $RESULTS_PATH
+            output 'Your submission was received but no test cases were found.' > "$RESULTS_PATH"
         exit
     fi
 
@@ -78,7 +78,7 @@ linkTestData() {
 }
 
 beginBuildingResultJson() {
-    echo -n '[' > $CASES_PATH
+    echo -n '[' > "$CASES_PATH"
 }
 
 runInitCommand() {
@@ -94,16 +94,16 @@ runInitCommand() {
 }
 
 finishBuildingResultJson() {
-    sed '$ s/.$//' $CASES_PATH > .cases_tmp
-    mv .cases_tmp $CASES_PATH
-    printf ']' >> $CASES_PATH
+    sed '$ s/.$//' "$CASES_PATH" > .cases_tmp
+    mv .cases_tmp "$CASES_PATH"
+    printf ']' >> "$CASES_PATH"
     printf "\nTesting done... writing to results.json\n"
-    $PYTHON_BIN "$AUTOGRADER_PATH/.utils/toJsonFromFile.py" output $FEEDBACK_PATH tests $CASES_PATH > $RESULTS_PATH
+    $PYTHON_BIN "$AUTOGRADER_PATH/.utils/toJsonFromFile.py" output $FEEDBACK_PATH tests "$CASES_PATH" > "$RESULTS_PATH"
 }
 
 cleanup() {
     # Clean-up
-    rm $CASES_PATH 2> /dev/null
+    rm "$CASES_PATH" 2> /dev/null
     rm $TMP_OUTPUT_PATH 2> /dev/null
     rm $FEEDBACK_PATH 2> /dev/null
     rm $DIFF_PATH 2> /dev/null
@@ -202,18 +202,18 @@ for f in $files; do
        
         test_case_args="score 0 max_score 1 number $f runtime $runtime "
         $PYTHON_BIN "$AUTOGRADER_PATH/.utils/toJson.py" $test_case_args \
-            output "$(pwd)/$TMP_OUTPUT_PATH" diff "$(pwd)/$DIFF_PATH" >> $CASES_PATH
+            output "$(pwd)/$TMP_OUTPUT_PATH" diff "$(pwd)/$DIFF_PATH" >> "$CASES_PATH"
 
-        printf ',' >> $CASES_PATH
+        printf ',' >> "$CASES_PATH"
     else
         echo "Correct\n"
         score=$((score + 1))
         
         test_case_args="score 1 max_score 1 number $f runtime $runtime"
         $PYTHON_BIN "$AUTOGRADER_PATH/.utils/toJson.py" $test_case_args \
-            output "$SUBMISSION_PATH/$TMP_OUTPUT_PATH" >> $CASES_PATH
+            output "$SUBMISSION_PATH/$TMP_OUTPUT_PATH" >> "$CASES_PATH"
 
-        printf ',' >> $CASES_PATH
+        printf ',' >> "$CASES_PATH"
     fi 
 done
 echo "$score case(s) passed out of $max case(s)" >> $FEEDBACK_PATH
