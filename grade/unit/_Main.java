@@ -1,6 +1,6 @@
 import java.io.*;
 
-public class Main {
+public class _Main {
     public static int[] stringToIntegerArray(String input) {
         input = input.trim();
         input = input.substring(1, input.length() - 1);
