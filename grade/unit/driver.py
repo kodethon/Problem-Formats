@@ -15,7 +15,8 @@ with open(driver_template_path) as f:
     # Obtain case to replace
     case = sys.stdin.read()
     driver_contents = driver_contents.replace('{{case}}', case)
-        
+    
+    '''
     # Obtain solution code into test file 
     solution = sys.argv[2]
     if not os.path.exists(solution):
@@ -24,6 +25,7 @@ with open(driver_template_path) as f:
     with open(solution) as f:
         solution_contents = f.read()
         driver_contents = driver_contents.replace('{{inline}}', solution_contents)
+    '''
         
     # Create file for testing
     driver_name = os.path.basename(driver_template_path)
