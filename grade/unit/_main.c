@@ -1,5 +1,0 @@
-{{link}}
-
-int main() {
-    {{case}}
-}
