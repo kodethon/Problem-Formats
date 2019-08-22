@@ -4,6 +4,10 @@
 
 # Assumptions:
 #   1. There is at least one file in the inputs folder 
+#
+# Arguments:
+#   $1 => Which test case to run, defaults to all
+#
 
 ### Functions
 
@@ -136,7 +140,12 @@ runInitCommand
 
 score=0 # Student's score
 max=0 # Max score
-files=$(ls "$AUTOGRADER_PATH/.answers" | sort -n) # Get all answer files from answer folder
+
+if [ -z $1 ]; then
+    files=$(ls "$AUTOGRADER_PATH/.answers" | sort -n) # Get all answer files from answer folder
+else
+    files=$1
+fi
 for f in $files; do
     echo "~ Test case $f"
 
